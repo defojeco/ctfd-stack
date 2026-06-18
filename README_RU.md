@@ -14,12 +14,12 @@
 | [ctfd-ldap-plugin](https://github.com/defojeco/ctfd-ldap-plugin) | Аутентификация через Active Directory с кэшем AES-256 и автоназначением команд | defojeco |
 | [ctfd-plugin-multichoice](https://github.com/defojeco/ctfd-plugin-multichoice) | Задания с выбором ответа — одиночный/множественный выбор, перемешивание, частичный зачёт | defojeco |
 | [ctfd-user-control-plugin](https://github.com/defojeco/ctfd-user-control-plugin) | Блокировка профиля, лимит попыток, журнал аудита | defojeco |
-| [chat-notifier](https://github.com/tamuctf/ctfd-chat-notifier) | Уведомления в Discord / Slack / Telegram | tamuctf |
+| [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) | Уведомления в Discord / Slack / Telegram | krzys-h |
 
 ### Темы
 | Тема | Описание | Автор |
 |---|---|---|
-| [wmctf2025](https://github.com/wm-team/WMCTF2025-Welcome) | Современная тема с 3D таблицей лидеров | wm-team |
+| [wmctf2025](https://github.com/wm-team/ctfd-wmctf2025-theme) | Современная тема с 3D таблицей лидеров | wm-team |
 | [pixo](https://github.com/jagdishtripathy/pixo) | Ретро тема в стиле CRT | jagdishtripathy |
 | [neon](https://github.com/chainflag/ctfd-neon-theme) | Тёмная неоновая тема | chainflag |
 
@@ -102,10 +102,10 @@ docker compose down && docker compose up -d
 ## Благодарности
 
 - [CTFd](https://github.com/CTFd/CTFd) — платформа
-- [wmctf2025 theme](https://github.com/wm-team/WMCTF2025-Welcome) — wm-team
+- [wmctf2025 theme](https://github.com/wm-team/ctfd-wmctf2025-theme) — wm-team
 - [pixo theme](https://github.com/jagdishtripathy/pixo) — jagdishtripathy
 - [neon theme](https://github.com/chainflag/ctfd-neon-theme) — chainflag
-- [chat-notifier](https://github.com/tamuctf/ctfd-chat-notifier) — tamuctf
+- [chat-notifier](https://github.com/krzys-h/CTFd-chat-notifier) — krzys-h
 
 ## Лицензия
 
