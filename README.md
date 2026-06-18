@@ -14,12 +14,12 @@ Built on [CTFd 3.8.5](https://github.com/CTFd/CTFd).
 | [ctfd-ldap-plugin](https://github.com/defojeco/ctfd-ldap-plugin) | Active Directory authentication with AES-256 cache and team auto-assignment | defojeco |
 | [ctfd-plugin-multichoice](https://github.com/defojeco/ctfd-plugin-multichoice) | Multiple choice challenge type with shuffle and partial scoring | defojeco |
 | [ctfd-user-control-plugin](https://github.com/defojeco/ctfd-user-control-plugin) | Profile lock, attempt limiting, and audit log | defojeco |
-| [chat-notifier](https://github.com/tamuctf/ctfd-chat-notifier) | Discord / Slack / Telegram notifications | tamuctf |
+| [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) | Discord / Slack / Telegram notifications | tamuctf |
 
 ### Themes
 | Theme | Description | Author |
 |---|---|---|
-| [wmctf2025](https://github.com/wm-team/WMCTF2025-Welcome) | Clean modern theme with 3D scoreboard | wm-team |
+| [wmctf2025](https://github.com/wm-team/ctfd-wmctf2025-theme) | Clean modern theme with 3D scoreboard | wm-team |
 | [pixo](https://github.com/jagdishtripathy/pixo) | Retro CRT-style theme | jagdishtripathy |
 | [neon](https://github.com/chainflag/ctfd-neon-theme) | Dark neon glow theme | chainflag |
 
@@ -103,10 +103,10 @@ docker compose down && docker compose up -d
 ## Credits
 
 - [CTFd](https://github.com/CTFd/CTFd) — the platform
-- [wmctf2025 theme](https://github.com/wm-team/WMCTF2025-Welcome) — wm-team
+- [wmctf2025 theme](https://github.com/wm-team/ctfd-wmctf2025-theme) — wm-team
 - [pixo theme](https://github.com/jagdishtripathy/pixo) — jagdishtripathy
 - [neon theme](https://github.com/chainflag/ctfd-neon-theme) — chainflag
-- [chat-notifier](https://github.com/tamuctf/ctfd-chat-notifier) — tamuctf
+- [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) — krzys-h
 
 ## License
 
