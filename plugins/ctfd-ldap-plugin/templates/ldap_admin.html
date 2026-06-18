@@ -1,0 +1,462 @@
+{% extends "admin/base.html" %}
+
+{% block stylesheets %}
+<style>
+  .ldap-section {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .ldap-section h5 {
+    font-weight: 700;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-weight: 500; }
+  .toggle-desc { font-size: 0.82em; color: #888; margin-top: 2px; }
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+  .badge-on  { background: #d4edda; color: #155724; }
+  .badge-off { background: #f8d7da; color: #721c24; }
+  #testOutput {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    min-height: 40px;
+    display: none;
+  }
+  .form-switch { transform: scale(1.3); margin-left: 4px; }
+  .mapping-table { width: 100%; border-collapse: collapse; }
+  .mapping-table th {
+    background: #f8f9fa; padding: 8px 12px;
+    text-align: left; font-size: 0.85em; color: #555;
+    border-bottom: 2px solid #dee2e6;
+  }
+  .mapping-table td { padding: 6px 8px; vertical-align: middle; }
+  .mapping-table tr:nth-child(even) td { background: #fafafa; }
+  .remove-row { background:none; border:none; color:#dc3545; font-size:1.1em; cursor:pointer; padding:2px 6px; }
+  .remove-row:hover { color:#a71d2a; }
+  .cats-hint { font-size:0.78em; color:#888; margin-top:3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>LDAP / Active Directory</h1>
+    <p class="lead">Domain authentication plugin settings</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="alertBox"></div>
+
+  {% if not cfg.has_crypto %}
+  <div class="alert alert-warning">
+    <b>cryptography</b> not installed — cache stored as base64 (insecure).
+    Run: <code>pip install cryptography</code>
+  </div>
+  {% endif %}
+
+  <!-- Status -->
+  <div class="ldap-section">
+    <h5>Status</h5>
+    <div>
+      LDAP: <span class="status-badge {% if cfg.ldap_enabled %}badge-on{% else %}badge-off{% endif %}">
+        {{ "ON" if cfg.ldap_enabled else "OFF" }}</span>
+      &nbsp; Local: <span class="status-badge {% if cfg.local_enabled %}badge-on{% else %}badge-off{% endif %}">
+        {{ "ON" if cfg.local_enabled else "OFF" }}</span>
+      &nbsp; Cache: <span class="status-badge {% if cfg.cache_enabled %}badge-on{% else %}badge-off{% endif %}">
+        {{ "ON" if cfg.cache_enabled else "OFF" }}</span>
+    </div>
+  </div>
+
+  <!-- Login modes -->
+  <div class="ldap-section">
+    <h5>Login Modes</h5>
+    <form id="formModes" onsubmit="return saveSettings(event, this)">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Domain login (LDAP/AD)</div>
+          <div class="toggle-desc">Users can authenticate via Active Directory</div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="ldap_enabled"
+            {% if cfg.ldap_enabled %}checked{% endif %}>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Local login (CTFd accounts)</div>
+          <div class="toggle-desc">Admin (id=1) always has local access regardless of this setting</div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="ldap_local_enabled"
+            {% if cfg.local_enabled %}checked{% endif %}>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Credential caching</div>
+          <div class="toggle-desc">
+            Fallback login when LDAP is unavailable.
+            {% if cfg.has_crypto %}
+              <span class="status-badge badge-on">AES-256 (Fernet)</span>
+            {% else %}
+              <span class="status-badge badge-off">base64</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="ldap_cache_enabled"
+            {% if cfg.cache_enabled %}checked{% endif %}>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Debug mode</div>
+          <div class="toggle-desc">Verbose logs with [LDAP-PLUGIN] tag</div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="ldap_debug"
+            {% if cfg.debug %}checked{% endif %}>
+        </div>
+      </div>
+      <div class="mt-3 row">
+        <div class="col-md-3">
+          <label>Cache TTL (hours)</label>
+          <input class="form-control" type="number" name="ldap_cache_ttl"
+                 value="{{ cfg.cache_ttl }}" min="1" max="8760">
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save modes</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- LDAP server settings -->
+  <div class="ldap-section">
+    <h5>LDAP Server Connection</h5>
+    <form id="formServer" onsubmit="return saveSettings(event, this)">
+      <div class="row">
+        <div class="col-md-8">
+          <label>Host</label>
+          <input class="form-control" type="text" name="ldap_host" value="{{ cfg.host }}">
+        </div>
+        <div class="col-md-4">
+          <label>Port</label>
+          <input class="form-control" type="number" name="ldap_port" value="{{ cfg.port }}">
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <label>Base DN</label>
+          <input class="form-control" type="text" name="ldap_base_dn" value="{{ cfg.base_dn }}">
+        </div>
+        <div class="col-md-6">
+          <label>Domain (for UPN)</label>
+          <input class="form-control" type="text" name="ldap_domain" value="{{ cfg.domain }}">
+          <small class="text-muted">User enters <b>ivanov</b>, sent to AD as <b>ivanov@{{ cfg.domain }}</b></small>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <label>Search filter</label>
+          <input class="form-control" type="text" name="ldap_search_filter" value="{{ cfg.search_filter }}">
+          <small class="text-muted"><code>{}</code> is replaced with username</small>
+        </div>
+        <div class="col-md-6">
+          <label>Email attribute</label>
+          <input class="form-control" type="text" name="ldap_attr_email" value="{{ cfg.attr_email }}">
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="ldap_use_ssl"
+                   {% if cfg.use_ssl %}checked{% endif %}>
+            <label class="form-check-label">SSL (LDAPS, port 636)</label>
+          </div>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="ldap_use_tls"
+                   {% if cfg.use_tls %}checked{% endif %}>
+            <label class="form-check-label">STARTTLS (port 389)</label>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save server settings</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Teams & Categories -->
+  <div class="ldap-section">
+    <h5>Teams &amp; Category Access</h5>
+
+    <div class="toggle-row mb-3">
+      <div>
+        <div class="toggle-label">Enable category filtering</div>
+        <div class="toggle-desc">
+          When ON — participants see only challenges in their team's allowed categories.<br>
+          When OFF — everyone sees everything (mappings are saved, team assignment still works).
+        </div>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="cats_enabled_chk"
+          {% if cfg.cats_enabled %}checked{% endif %}>
+      </div>
+    </div>
+
+    <hr>
+
+    <h6 class="font-weight-bold">Step 1 — AD Group &rarr; CTFd Team</h6>
+    <p class="text-muted" style="font-size:0.85em">
+      On login the plugin reads <code>memberOf</code> and auto-assigns the user to a CTFd team.
+      If the team doesn't exist it will be created automatically.
+    </p>
+    <table class="mapping-table">
+      <thead><tr><th>AD Group (CN)</th><th style="width:30px;text-align:center">&rarr;</th><th>CTFd Team name</th><th></th></tr></thead>
+      <tbody id="group-map-body">
+        {% for ad_cn, tname in cfg.group_map.items() %}
+        <tr>
+          <td><input type="text" class="form-control form-control-sm" data-field="ad_group" value="{{ ad_cn }}" placeholder="team-web"></td>
+          <td style="text-align:center;color:#aaa">&rarr;</td>
+          <td><input type="text" class="form-control form-control-sm" data-field="team_name_map" value="{{ tname }}" placeholder="Web Team"></td>
+          <td><button type="button" class="remove-row" onclick="removeRow(this)">&#10005;</button></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td><input type="text" class="form-control form-control-sm" data-field="ad_group" placeholder="team-web"></td>
+          <td style="text-align:center;color:#aaa">&rarr;</td>
+          <td><input type="text" class="form-control form-control-sm" data-field="team_name_map" placeholder="Web Team"></td>
+          <td><button type="button" class="remove-row" onclick="removeRow(this)">&#10005;</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addGroupRow()">+ Add group</button>
+
+    <hr>
+
+    <h6 class="font-weight-bold">Step 2 — CTFd Team &rarr; Allowed categories</h6>
+    <p class="text-muted" style="font-size:0.85em">
+      One category can be given to multiple teams — just add it to each row.
+      <br>
+      <b>Tag override:</b> adding tag <code>team:Web Team</code> to a specific challenge makes it
+      visible to that team <b>regardless of category</b>.
+    </p>
+    <table class="mapping-table">
+      <thead><tr><th>CTFd Team name</th><th style="width:30px;text-align:center">&rarr;</th><th>Categories (comma-separated)</th><th></th></tr></thead>
+      <tbody id="team-cats-body">
+        {% for tname, cats in cfg.team_cats.items() %}
+        <tr>
+          <td><input type="text" class="form-control form-control-sm" data-field="cat_team" value="{{ tname }}" placeholder="Web Team"></td>
+          <td style="text-align:center;color:#aaa">&rarr;</td>
+          <td>
+            <input type="text" class="form-control form-control-sm" data-field="cat_values" value="{{ cats|join(', ') }}" placeholder="web, crypto">
+            <div class="cats-hint">Case-insensitive. Exact names as in CTFd.</div>
+          </td>
+          <td><button type="button" class="remove-row" onclick="removeRow(this)">&#10005;</button></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td><input type="text" class="form-control form-control-sm" data-field="cat_team" placeholder="Web Team"></td>
+          <td style="text-align:center;color:#aaa">&rarr;</td>
+          <td>
+            <input type="text" class="form-control form-control-sm" data-field="cat_values" placeholder="web, crypto">
+            <div class="cats-hint">Case-insensitive. Exact names as in CTFd.</div>
+          </td>
+          <td><button type="button" class="remove-row" onclick="removeRow(this)">&#10005;</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addCatRow()">+ Add team</button>
+
+    <div class="mt-4">
+      <button class="btn btn-success" onclick="saveTeams()">Save team settings</button>
+    </div>
+  </div>
+
+  <!-- Diagnostics -->
+  <div class="ldap-section">
+    <h5>Diagnostics</h5>
+    <button class="btn btn-outline-secondary mb-3" onclick="doPing()">
+      Ping server (TCP check)
+    </button>
+    <hr>
+    <p class="font-weight-bold">Authentication test:</p>
+    <div class="row">
+      <div class="col-md-4">
+        <input class="form-control" type="text" id="testUser" placeholder="Username (sAMAccountName)">
+      </div>
+      <div class="col-md-4">
+        <input class="form-control" type="password" id="testPass" placeholder="Password">
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-outline-primary" onclick="doTest()">Test</button>
+      </div>
+    </div>
+    <div id="testOutput" class="mt-3"></div>
+    <hr>
+    <p class="text-muted mb-1"><b>View logs:</b></p>
+    <pre class="bg-light p-2 rounded"><code>docker logs &lt;container&gt; 2>&amp;1 | grep LDAP-PLUGIN</code></pre>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var NONCE = "{{ session['nonce'] }}";
+
+function showAlert(msg, type) {
+  document.getElementById('alertBox').innerHTML =
+    '<div class="alert alert-' + type + ' alert-dismissable">' + msg +
+    '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>';
+}
+
+function apiPost(url, body) {
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'CSRF-Token': NONCE
+    },
+    body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); });
+}
+
+function saveSettings(e, form) {
+  e.preventDefault();
+  var data = {};
+  var inputs = form.querySelectorAll('input');
+  inputs.forEach(function(inp) {
+    if (inp.type === 'checkbox') {
+      data[inp.name] = inp.checked ? 'true' : '';
+    } else if (inp.name) {
+      data[inp.name] = inp.value;
+    }
+  });
+  apiPost('/admin/ldap-settings/save', data).then(function(r) {
+    if (r.success) {
+      showAlert('Settings saved. Reload page to see updated status.', 'success');
+    } else {
+      showAlert('Error: ' + (r.message || 'unknown'), 'danger');
+    }
+  }).catch(function(err) {
+    showAlert('Request failed: ' + err, 'danger');
+  });
+  return false;
+}
+
+function doPing() {
+  var out = document.getElementById('testOutput');
+  out.style.display = 'block';
+  out.textContent = 'Pinging...';
+  apiPost('/admin/ldap-settings/ping', {}).then(function(r) {
+    out.textContent = (r.success ? '✅ ' : '❌ ') + r.message;
+  }).catch(function(err) {
+    out.textContent = '❌ Request failed: ' + err;
+  });
+}
+
+function doTest() {
+  var user = document.getElementById('testUser').value;
+  var pass = document.getElementById('testPass').value;
+  var out = document.getElementById('testOutput');
+  out.style.display = 'block';
+  out.textContent = 'Testing...';
+  apiPost('/admin/ldap-settings/test', {test_user: user, test_pass: pass}).then(function(r) {
+    out.textContent = (r.steps || []).join('\n');
+  }).catch(function(err) {
+    out.textContent = '❌ Request failed: ' + err;
+  });
+}
+
+// ── Teams helpers ────────────────────────────────────────────────────────────
+
+function removeRow(btn) {
+  var row = btn.closest('tr');
+  var tbody = row.parentElement;
+  if (tbody.querySelectorAll('tr').length > 1) {
+    row.remove();
+  } else {
+    row.querySelectorAll('input').forEach(function(i) { i.value = ''; });
+  }
+}
+
+function addGroupRow() {
+  var tbody = document.getElementById('group-map-body');
+  var tr = document.createElement('tr');
+  tr.innerHTML = '<td><input type="text" class="form-control form-control-sm" data-field="ad_group" placeholder="team-pwn"></td>' +
+    '<td style="text-align:center;color:#aaa">&rarr;</td>' +
+    '<td><input type="text" class="form-control form-control-sm" data-field="team_name_map" placeholder="Pwn Team"></td>' +
+    '<td><button type="button" class="remove-row" onclick="removeRow(this)">&#10005;</button></td>';
+  tbody.appendChild(tr);
+}
+
+function addCatRow() {
+  var tbody = document.getElementById('team-cats-body');
+  var tr = document.createElement('tr');
+  tr.innerHTML = '<td><input type="text" class="form-control form-control-sm" data-field="cat_team" placeholder="Pwn Team"></td>' +
+    '<td style="text-align:center;color:#aaa">&rarr;</td>' +
+    '<td><input type="text" class="form-control form-control-sm" data-field="cat_values" placeholder="pwn, reverse">' +
+    '<div class="cats-hint">Case-insensitive. Exact names as in CTFd.</div></td>' +
+    '<td><button type="button" class="remove-row" onclick="removeRow(this)">&#10005;</button></td>';
+  tbody.appendChild(tr);
+}
+
+function saveTeams() {
+  var payload = {
+    ldap_cats_enabled: document.getElementById('cats_enabled_chk').checked ? 'true' : '',
+    ad_group:      [],
+    team_name_map: [],
+    cat_team:      [],
+    cat_values:    []
+  };
+
+  document.querySelectorAll('#group-map-body tr').forEach(function(row) {
+    payload.ad_group.push(row.querySelector('[data-field="ad_group"]').value);
+    payload.team_name_map.push(row.querySelector('[data-field="team_name_map"]').value);
+  });
+  document.querySelectorAll('#team-cats-body tr').forEach(function(row) {
+    payload.cat_team.push(row.querySelector('[data-field="cat_team"]').value);
+    payload.cat_values.push(row.querySelector('[data-field="cat_values"]').value);
+  });
+
+  apiPost('/admin/ldap-settings/save-teams', payload).then(function(r) {
+    if (r.success) {
+      showAlert('Team settings saved.', 'success');
+    } else {
+      showAlert('Error: ' + (r.message || 'unknown'), 'danger');
+    }
+  }).catch(function(err) {
+    showAlert('Request failed: ' + err, 'danger');
+  });
+}
+</script>
+{% endblock %}

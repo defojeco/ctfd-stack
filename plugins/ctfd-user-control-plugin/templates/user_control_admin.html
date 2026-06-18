@@ -1,0 +1,204 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+    <div class="container">
+        <h1>User Control Settings</h1>
+        <p class="lead">Управление поведением пользователей</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <form id="user-control-form">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h4>Основные настройки</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uc_enabled" name="uc_enabled"
+                                    {% if config.enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="uc_enabled">
+                                    <strong>Включить User Control Plugin</strong>
+                                </label>
+                                <small class="form-text text-muted">Главный переключатель плагина</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h4>Контроль профиля</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uc_block_username"
+                                    name="uc_block_username" {% if config.block_username %}checked{% endif %}>
+                                <label class="form-check-label" for="uc_block_username">
+                                    Блокировать смену username
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uc_block_email"
+                                    name="uc_block_email" {% if config.block_email %}checked{% endif %}>
+                                <label class="form-check-label" for="uc_block_email">
+                                    Блокировать смену email
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uc_block_password"
+                                    name="uc_block_password" {% if config.block_password %}checked{% endif %}>
+                                <label class="form-check-label" for="uc_block_password">
+                                    Блокировать смену пароля
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h4>Ограничение попыток</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uc_limit_attempts"
+                                    name="uc_limit_attempts" {% if config.limit_attempts %}checked{% endif %}>
+                                <label class="form-check-label" for="uc_limit_attempts">
+                                    <strong>Включить ограничение попыток</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="uc_max_attempts">Максимум попыток на задание</label>
+                            <input type="number" class="form-control" id="uc_max_attempts"
+                                name="uc_max_attempts" value="{{ config.max_attempts }}" min="1">
+                            <small class="form-text text-muted">Количество неудачных попыток за период</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="uc_attempts_period">Период (минуты)</label>
+                            <input type="number" class="form-control" id="uc_attempts_period"
+                                name="uc_attempts_period" value="{{ config.attempts_period }}" min="1">
+                            <small class="form-text text-muted">Временное окно для подсчета попыток</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h4>Белый список</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="uc_whitelist">Пользователи без ограничений (JSON)</label>
+                            <textarea class="form-control" id="uc_whitelist" name="uc_whitelist"
+                                rows="5" style="font-family: monospace;">{{ config.whitelist }}</textarea>
+                            <small class="form-text text-muted">
+                                Список username пользователей без ограничений<br>
+                                Формат: ["admin", "moderator"]<br>
+                                Примечание: Superadmin (ID=1) всегда в белом списке
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h4>Аудит</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uc_audit_enabled"
+                                    name="uc_audit_enabled" {% if config.audit_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="uc_audit_enabled">
+                                    <strong>Включить аудит действий</strong>
+                                </label>
+                                <small class="form-text text-muted">Логировать все действия пользователей</small>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <a href="{{ url_for('user_control.admin_logs') }}" class="btn btn-info">
+                                Просмотр логов
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg">Сохранить настройки</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('user-control-form');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {};
+
+        // Собираем все поля
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // Добавляем чекбоксы
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            data[cb.name] = cb.checked;
+        });
+
+        // Парсим JSON поле whitelist
+        const whitelistInput = form.querySelector('[name="uc_whitelist"]');
+        if (whitelistInput) {
+            try {
+                data['uc_whitelist'] = JSON.parse(whitelistInput.value);
+            } catch (e) {
+                alert('Ошибка в JSON поле whitelist: ' + e.message);
+                return;
+            }
+        }
+
+        fetch('{{ url_for("user_control.admin_save") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '{{ nonce }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Настройки сохранены успешно!');
+                location.reload();
+            } else {
+                alert('Ошибка сохранения: ' + (result.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Ошибка: ' + error);
+        });
+    });
+});
+</script>
+{% endblock %}

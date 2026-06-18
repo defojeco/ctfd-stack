@@ -1,0 +1,624 @@
+{% extends "admin/challenges/update.html" %}
+
+{% block value %}
+
+<div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert" style="border-left:4px solid #0d6efd;border-radius:6px;">
+  <span style="font-size:1.2em">✏️</span>
+  <div>{{ mc_trans('update_intro') }}</div>
+</div>
+
+<!-- Вопросы и варианты ответа -->
+<div class="form-group mb-4">
+  <label class="form-label fw-bold">{{ mc_trans('options_label') }}</label>
+
+  <div id="questions-container"></div>
+
+  <button type="button" class="btn btn-outline-success btn-sm mt-2" id="mc-add-question-btn">
+    {{ mc_trans('add_question') }}
+  </button>
+
+  <input type="hidden" name="flagchoose" id="flagchoose-field" value="{{ challenge.flagchoose }}">
+</div>
+
+<!-- Настройки -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <label class="form-label fw-bold">{{ mc_trans('mode_label') }}</label>
+    <select class="form-select" name="mode" id="mc-mode">
+      <option value="single" {% if challenge.mode == 'single' %}selected{% endif %}>{{ mc_trans('mode_single') }}</option>
+      <option value="multi"  {% if challenge.mode == 'multi'  %}selected{% endif %}>{{ mc_trans('mode_multi') }}</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">{{ mc_trans('value_label') }}</label>
+    <input type="number" class="form-control chal-value" name="value" id="mc-value" value="{{ challenge.value }}" required>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">{{ mc_trans('settings_label') }}</label>
+    <div class="form-check mt-2">
+      <input class="form-check-input" type="checkbox" name="shuffle" id="mc-shuffle" value="true"
+        {% if challenge.shuffle %}checked{% endif %}>
+      <label class="form-check-label" for="mc-shuffle">{{ mc_trans('shuffle') }}</label>
+    </div>
+    <div class="form-check mt-1">
+      <input class="form-check-input" type="checkbox" name="partial_score" id="mc-partial" value="true"
+        {% if challenge.partial_score %}checked{% endif %}>
+      <label class="form-check-label" for="mc-partial">{{ mc_trans('partial') }}</label>
+    </div>
+  </div>
+</div>
+
+<!-- Настройки частичного зачёта -->
+<div id="partial-settings-block" style="display:{% if challenge.partial_score %}block{% else %}none{% endif %};" class="mb-3 p-3 border rounded bg-light">
+  <h6 class="fw-bold mb-3">{{ mc_trans('partial_settings_label') }}</h6>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">{{ mc_trans('partial_mode_label') }}</label>
+      <select class="form-select" name="partial_mode" id="mc-partial-mode">
+        <option value="percentage" {% if challenge.partial_mode == 'percentage' or not challenge.partial_mode %}selected{% endif %}>{{ mc_trans('partial_mode_percentage') }}</option>
+        <option value="fixed" {% if challenge.partial_mode == 'fixed' %}selected{% endif %}>{{ mc_trans('partial_mode_fixed') }}</option>
+      </select>
+    </div>
+
+    <div class="col-md-6" id="fixed-points-container" style="display:{% if challenge.partial_mode == 'fixed' %}block{% else %}none{% endif %};">
+      <label class="form-label">{{ mc_trans('points_per_question') }}</label>
+      <input type="number" class="form-control" id="mc-points-per-question" placeholder="20" min="0">
+    </div>
+  </div>
+
+  <div id="percentage-settings-container" class="mt-3" style="display:{% if challenge.partial_mode == 'fixed' %}none{% else %}block{% endif %};">
+    <label class="form-label">Процентные пороги (по умолчанию: 90%→100%, 70%→80%, 50%→60%, <50%→40%)</label>
+    <div class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label small">90-100% →</label>
+        <input type="number" class="form-control form-control-sm" id="mc-threshold-90" value="100" min="0" max="100">
+        <small class="text-muted">% баллов</small>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">70-89% →</label>
+        <input type="number" class="form-control form-control-sm" id="mc-threshold-70" value="80" min="0" max="100">
+        <small class="text-muted">% баллов</small>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">50-69% →</label>
+        <input type="number" class="form-control form-control-sm" id="mc-threshold-50" value="60" min="0" max="100">
+        <small class="text-muted">% баллов</small>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small"><50% →</label>
+        <input type="number" class="form-control form-control-sm" id="mc-threshold-0" value="40" min="0" max="100">
+        <small class="text-muted">% баллов</small>
+      </div>
+    </div>
+  </div>
+
+  <input type="hidden" name="partial_settings" id="partial-settings-field" value="{{ challenge.partial_settings }}">
+</div>
+
+<style>
+.mc-question-block {
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #f8f9fa;
+  transition: border-color .2s;
+}
+.mc-question-block:hover { border-color: #0d6efd; }
+.mc-question-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mc-question-number {
+  background: #0d6efd;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.mc-question-text-input {
+  flex: 1;
+  border: 2px solid #ced4da;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.mc-question-text-input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+.mc-remove-question-btn {
+  flex-shrink: 0;
+}
+.mc-options-list {
+  margin-left: 42px;
+}
+.mc-option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  transition: border-color .15s, background .15s;
+}
+.mc-option-row:hover { border-color: #0d6efd; background: #f0f6ff; }
+.mc-option-row.is-correct { border-color: #198754; background: #f0fff4; }
+.mc-option-row .form-check-input { width:18px; height:18px; flex-shrink:0; cursor:pointer; }
+.mc-option-row input[type=text] { flex:1; border:none; background:transparent; font-size:.95rem; outline:none; }
+.mc-option-row input[type=text]:focus { outline: none; }
+.mc-option-drag { cursor:grab; color:#aaa; font-size:1.2em; }
+.mc-option-drag:active { cursor:grabbing; }
+.mc-correct-label { font-size:.75em; color:#198754; font-weight:600; display:none; }
+.mc-option-row.is-correct .mc-correct-label { display:inline; }
+.mc-add-option-btn {
+  margin-left: 42px;
+}
+</style>
+
+<script>
+(function() {
+  var mcQuestions = [];
+  var MC_I18N = {
+    correct_tag: {{ mc_trans('correct_tag') | tojson }},
+    placeholder: {{ mc_trans('option_placeholder') | tojson }},
+    question_placeholder: {{ mc_trans('question_placeholder') | tojson }},
+    min_two: {{ mc_trans('min_two') | tojson }},
+    remove: {{ mc_trans('remove') | tojson }},
+    remove_question: {{ mc_trans('remove_question') | tojson }},
+    add_option: {{ mc_trans('add_option') | tojson }}
+  };
+
+  // Парсинг существующего значения
+  function mcParseExisting() {
+    var field = document.getElementById('flagchoose-field');
+    var raw = field ? field.value : '';
+    mcQuestions = [];
+
+    if (!raw) {
+      // Пустое задание — создаём один вопрос
+      mcQuestions = [{
+        text: '',
+        options: [
+          {text:'', correct:false},
+          {text:'', correct:false},
+          {text:'', correct:false},
+          {text:'', correct:false}
+        ]
+      }];
+      return;
+    }
+
+    // Проверяем формат
+    if (raw.indexOf('¶') !== -1) {
+      // Новый формат: множественные вопросы
+      var questionsRaw = raw.split('¶¶');
+      questionsRaw.forEach(function(qRaw) {
+        qRaw = qRaw.trim();
+        if (!qRaw) return;
+
+        var parts = qRaw.split('¶');
+        if (parts.length >= 2) {
+          var questionText = parts[0].trim();
+          var optionsRaw = parts[1].trim();
+          var options = [];
+
+          optionsRaw.split('§').forEach(function(opt) {
+            opt = opt.trim();
+            if (!opt) return;
+            if (opt.indexOf('|') !== -1) {
+              var idx = opt.lastIndexOf('|');
+              options.push({
+                text: opt.substring(0, idx),
+                correct: opt.substring(idx+1) === '1'
+              });
+            } else {
+              options.push({ text: opt, correct: false });
+            }
+          });
+
+          if (options.length > 0) {
+            mcQuestions.push({ text: questionText, options: options });
+          }
+        }
+      });
+    } else {
+      // Старый формат: один вопрос без текста
+      var options = [];
+      raw.split('§').forEach(function(opt) {
+        opt = opt.trim();
+        if (!opt) return;
+        if (opt.indexOf('|') !== -1) {
+          var idx = opt.lastIndexOf('|');
+          options.push({
+            text: opt.substring(0, idx),
+            correct: opt.substring(idx+1) === '1'
+          });
+        } else {
+          options.push({ text: opt, correct: false });
+        }
+      });
+
+      if (options.length > 0) {
+        mcQuestions = [{ text: '', options: options }];
+      }
+    }
+
+    if (mcQuestions.length === 0) {
+      mcQuestions = [{
+        text: '',
+        options: [
+          {text:'', correct:false},
+          {text:'', correct:false},
+          {text:'', correct:false},
+          {text:'', correct:false}
+        ]
+      }];
+    }
+  }
+
+  function mcBuildField() {
+    // Формат: вопрос1¶варианты1¶¶вопрос2¶варианты2
+    var parts = mcQuestions.map(function(q) {
+      var questionText = (q.text || '').replace(/¶/g, '').replace(/§/g, '');
+      var optionsParts = q.options.map(function(o) {
+        return (o.text || '').replace(/§/g,'').replace(/\|/g,'').replace(/¶/g,'') + '|' + (o.correct ? '1' : '0');
+      });
+      return questionText + '¶' + optionsParts.join('§');
+    });
+    var field = document.getElementById('flagchoose-field');
+    if (field) field.value = parts.join('¶¶');
+  }
+
+  function mcRenderQuestions() {
+    var c = document.getElementById('questions-container');
+    if (!c) return;
+    var modeEl = document.getElementById('mc-mode');
+    var mode = modeEl ? modeEl.value : 'single';
+    c.innerHTML = '';
+
+    mcQuestions.forEach(function(question, qIdx) {
+      var block = document.createElement('div');
+      block.className = 'mc-question-block';
+      block.setAttribute('data-q-idx', qIdx);
+
+      // Заголовок вопроса
+      var header = document.createElement('div');
+      header.className = 'mc-question-header';
+
+      var qNum = document.createElement('div');
+      qNum.className = 'mc-question-number';
+      qNum.textContent = qIdx + 1;
+      header.appendChild(qNum);
+
+      var qInput = document.createElement('input');
+      qInput.type = 'text';
+      qInput.className = 'mc-question-text-input';
+      qInput.value = question.text || '';
+      qInput.placeholder = MC_I18N.question_placeholder;
+      qInput.setAttribute('data-action', 'question-text');
+      qInput.setAttribute('data-q-idx', qIdx);
+      header.appendChild(qInput);
+
+      var removeQBtn = document.createElement('button');
+      removeQBtn.type = 'button';
+      removeQBtn.className = 'btn btn-sm btn-outline-danger mc-remove-question-btn';
+      removeQBtn.textContent = '×';
+      removeQBtn.title = MC_I18N.remove_question;
+      removeQBtn.setAttribute('data-action', 'remove-question');
+      removeQBtn.setAttribute('data-q-idx', qIdx);
+      header.appendChild(removeQBtn);
+
+      block.appendChild(header);
+
+      // Список вариантов
+      var optionsList = document.createElement('div');
+      optionsList.className = 'mc-options-list';
+
+      question.options.forEach(function(opt, oIdx) {
+        var row = document.createElement('div');
+        row.className = 'mc-option-row' + (opt.correct ? ' is-correct' : '');
+        row.setAttribute('data-q-idx', qIdx);
+        row.setAttribute('data-o-idx', oIdx);
+
+        // Drag handle
+        var drag = document.createElement('span');
+        drag.className = 'mc-option-drag';
+        drag.textContent = '⠿';
+        row.appendChild(drag);
+
+        // Checkbox/radio
+        var chk = document.createElement('input');
+        chk.type = mode === 'single' ? 'radio' : 'checkbox';
+        chk.className = 'form-check-input';
+        chk.checked = opt.correct;
+        chk.title = MC_I18N.correct_tag;
+        chk.setAttribute('data-action', 'toggle');
+        chk.setAttribute('data-q-idx', qIdx);
+        chk.setAttribute('data-o-idx', oIdx);
+        if (mode === 'single') {
+          chk.name = 'correct-q' + qIdx;
+        }
+        row.appendChild(chk);
+
+        // Text input
+        var txt = document.createElement('input');
+        txt.type = 'text';
+        txt.value = opt.text || '';
+        txt.placeholder = MC_I18N.placeholder;
+        txt.setAttribute('data-action', 'option-text');
+        txt.setAttribute('data-q-idx', qIdx);
+        txt.setAttribute('data-o-idx', oIdx);
+        row.appendChild(txt);
+
+        // Correct label
+        var lbl = document.createElement('span');
+        lbl.className = 'mc-correct-label';
+        lbl.textContent = MC_I18N.correct_tag;
+        row.appendChild(lbl);
+
+        // Remove button
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-danger ms-1';
+        btn.title = MC_I18N.remove;
+        btn.textContent = '×';
+        btn.setAttribute('data-action', 'remove-option');
+        btn.setAttribute('data-q-idx', qIdx);
+        btn.setAttribute('data-o-idx', oIdx);
+        row.appendChild(btn);
+
+        optionsList.appendChild(row);
+      });
+
+      block.appendChild(optionsList);
+
+      // Кнопка добавления варианта
+      var addOptBtn = document.createElement('button');
+      addOptBtn.type = 'button';
+      addOptBtn.className = 'btn btn-outline-primary btn-sm mt-2 mc-add-option-btn';
+      addOptBtn.textContent = MC_I18N.add_option;
+      addOptBtn.setAttribute('data-action', 'add-option');
+      addOptBtn.setAttribute('data-q-idx', qIdx);
+      block.appendChild(addOptBtn);
+
+      c.appendChild(block);
+    });
+
+    mcBuildField();
+  }
+
+  function mcAddQuestion() {
+    mcQuestions.push({
+      text: '',
+      options: [
+        {text:'', correct:false},
+        {text:'', correct:false}
+      ]
+    });
+    mcRenderQuestions();
+  }
+
+  function mcRemoveQuestion(qIdx) {
+    if (mcQuestions.length <= 1) {
+      alert('Минимум 1 вопрос');
+      return;
+    }
+    mcQuestions.splice(qIdx, 1);
+    mcRenderQuestions();
+  }
+
+  function mcAddOption(qIdx) {
+    mcQuestions[qIdx].options.push({ text: '', correct: false });
+    mcRenderQuestions();
+  }
+
+  function mcRemoveOption(qIdx, oIdx) {
+    if (mcQuestions[qIdx].options.length <= 2) {
+      alert(MC_I18N.min_two);
+      return;
+    }
+    mcQuestions[qIdx].options.splice(oIdx, 1);
+    mcRenderQuestions();
+  }
+
+  function mcToggleCorrect(qIdx, oIdx) {
+    var modeEl = document.getElementById('mc-mode');
+    var mode = modeEl ? modeEl.value : 'single';
+    if (mode === 'single') {
+      mcQuestions[qIdx].options.forEach(function(o, i) {
+        o.correct = (i === oIdx);
+      });
+    } else {
+      mcQuestions[qIdx].options[oIdx].correct = !mcQuestions[qIdx].options[oIdx].correct;
+    }
+    mcRenderQuestions();
+  }
+
+  function mcInitUpdate() {
+    var container = document.getElementById('questions-container');
+    if (!container || container.getAttribute('data-mc-init') === '1') return;
+    container.setAttribute('data-mc-init', '1');
+
+    mcParseExisting();
+
+    // Event delegation
+    container.addEventListener('click', function(e) {
+      var target = e.target;
+      var action = target.getAttribute('data-action');
+      var qIdx = parseInt(target.getAttribute('data-q-idx'), 10);
+      var oIdx = parseInt(target.getAttribute('data-o-idx'), 10);
+
+      if (action === 'remove-question') {
+        e.preventDefault();
+        e.stopPropagation();
+        mcRemoveQuestion(qIdx);
+      } else if (action === 'remove-option') {
+        e.preventDefault();
+        e.stopPropagation();
+        mcRemoveOption(qIdx, oIdx);
+      } else if (action === 'toggle') {
+        e.preventDefault();
+        mcToggleCorrect(qIdx, oIdx);
+      } else if (action === 'add-option') {
+        e.preventDefault();
+        mcAddOption(qIdx);
+      }
+    });
+
+    container.addEventListener('input', function(e) {
+      var target = e.target;
+      var action = target.getAttribute('data-action');
+      var qIdx = parseInt(target.getAttribute('data-q-idx'), 10);
+      var oIdx = parseInt(target.getAttribute('data-o-idx'), 10);
+
+      if (action === 'question-text') {
+        mcQuestions[qIdx].text = target.value;
+        mcBuildField();
+      } else if (action === 'option-text') {
+        mcQuestions[qIdx].options[oIdx].text = target.value;
+        mcBuildField();
+      }
+    });
+
+    var addQBtn = document.getElementById('mc-add-question-btn');
+    if (addQBtn) addQBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      mcAddQuestion();
+    });
+
+    var modeSelect = document.getElementById('mc-mode');
+    if (modeSelect) {
+      modeSelect.addEventListener('change', function() {
+        if (this.value === 'single') {
+          mcQuestions.forEach(function(q) {
+            var found = false;
+            q.options.forEach(function(o) {
+              if (o.correct && !found) { found = true; }
+              else { o.correct = false; }
+            });
+          });
+        }
+        mcRenderQuestions();
+      });
+    }
+
+    mcRenderQuestions();
+
+    // Обновить скрытое поле прямо перед сериализацией формы
+    var form = container.closest('form');
+    if (form) {
+      form.addEventListener('submit', function() {
+        mcBuildField();
+        mcBuildPartialSettings();
+      }, true);
+    }
+
+    // Обработчики для частичного зачёта
+    var partialCheckbox = document.getElementById('mc-partial');
+    var partialBlock = document.getElementById('partial-settings-block');
+    var partialModeSelect = document.getElementById('mc-partial-mode');
+    var fixedContainer = document.getElementById('fixed-points-container');
+    var percentageContainer = document.getElementById('percentage-settings-container');
+
+    if (partialCheckbox && partialBlock) {
+      partialCheckbox.addEventListener('change', function() {
+        partialBlock.style.display = this.checked ? 'block' : 'none';
+      });
+    }
+
+    if (partialModeSelect && fixedContainer && percentageContainer) {
+      partialModeSelect.addEventListener('change', function() {
+        if (this.value === 'fixed') {
+          fixedContainer.style.display = 'block';
+          percentageContainer.style.display = 'none';
+        } else {
+          fixedContainer.style.display = 'none';
+          percentageContainer.style.display = 'block';
+        }
+      });
+    }
+
+    // Загрузить существующие настройки частичного зачёта
+    mcLoadPartialSettings();
+  }
+
+  function mcBuildPartialSettings() {
+    var partialCheckbox = document.getElementById('mc-partial');
+    var partialModeSelect = document.getElementById('mc-partial-mode');
+    var settingsField = document.getElementById('partial-settings-field');
+
+    if (!partialCheckbox || !partialCheckbox.checked || !settingsField) {
+      if (settingsField) settingsField.value = '';
+      return;
+    }
+
+    var mode = partialModeSelect ? partialModeSelect.value : 'percentage';
+    var settings = {};
+
+    if (mode === 'fixed') {
+      var pointsInput = document.getElementById('mc-points-per-question');
+      settings.points_per_question = pointsInput ? parseFloat(pointsInput.value) || 0 : 0;
+    } else {
+      settings['90'] = parseInt(document.getElementById('mc-threshold-90').value) || 100;
+      settings['70'] = parseInt(document.getElementById('mc-threshold-70').value) || 80;
+      settings['50'] = parseInt(document.getElementById('mc-threshold-50').value) || 60;
+      settings['0'] = parseInt(document.getElementById('mc-threshold-0').value) || 40;
+    }
+
+    settingsField.value = JSON.stringify(settings);
+  }
+
+  function mcLoadPartialSettings() {
+    var settingsField = document.getElementById('partial-settings-field');
+    var partialModeSelect = document.getElementById('mc-partial-mode');
+
+    if (!settingsField || !settingsField.value) return;
+
+    try {
+      var settings = JSON.parse(settingsField.value);
+      var mode = partialModeSelect ? partialModeSelect.value : 'percentage';
+
+      if (mode === 'fixed' && settings.points_per_question !== undefined) {
+        var pointsInput = document.getElementById('mc-points-per-question');
+        if (pointsInput) pointsInput.value = settings.points_per_question;
+      } else {
+        // Процентный режим
+        if (settings['90'] !== undefined) document.getElementById('mc-threshold-90').value = settings['90'];
+        if (settings['70'] !== undefined) document.getElementById('mc-threshold-70').value = settings['70'];
+        if (settings['50'] !== undefined) document.getElementById('mc-threshold-50').value = settings['50'];
+        if (settings['0'] !== undefined) document.getElementById('mc-threshold-0').value = settings['0'];
+      }
+    } catch (e) {
+      console.error('Failed to parse partial settings:', e);
+    }
+  }
+
+  window.mcAddQuestion = mcAddQuestion;
+  window.mcRemoveQuestion = mcRemoveQuestion;
+  window.mcAddOption = mcAddOption;
+  window.mcRemoveOption = mcRemoveOption;
+  window.mcBuildField = mcBuildField;
+
+  if (document.getElementById('questions-container')) {
+    mcInitUpdate();
+  } else {
+    document.addEventListener('DOMContentLoaded', mcInitUpdate);
+    setTimeout(mcInitUpdate, 0);
+  }
+})();
+</script>
+
+{% endblock %}

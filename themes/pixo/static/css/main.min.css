@@ -1,0 +1,163 @@
+.pbadge{font-family: 'PRESS START 2P';}
+.pbadge-primary{color: #007bff;}
+.pbadge-secondary{color: #ff0e66;}
+.scanline{width:100%;height:200px;z-index:8;background:linear-gradient(0deg,rgba(0,0,0,0) 0,rgba(255,255,255,.4) 10%,rgba(0,0,0,.1) 100%);opacity:.1;position:absolute;bottom:100%;animation:scanline 8s linear infinite}
+.challenge-charts-box{padding:40px 0 40px 0;margin-top:10px;margin-bottom:20px}
+select option{background-color:#0c0327;font-family:Unifont}
+#score-graph>div>canvas,.challenge-charts{background:#fff}
+.category-header h3:before{content:' ';display:inline-block;width:30px;height:20px;background:url(../img/arrow2.png) no-repeat;background-size:contain}
+.category-header h3{text-transform:uppercase}
+.challenge-submit{background:#ff0e66!important;color:#fff!important;box-shadow:0 2px 25px rgba(255,0,130,.5);border:0!important}
+.challenge-submit:active{transform:scale(.9);opacity:.9}
+.challenge-button{box-shadow:3px 3px #3312d5!important;background-color:#2378c0!important;border-color:#2378c0!important}
+.challenge-button.challenge-solved,.challenge-button.solved-challenge{background-color:#01c569!important;border-color:#01c569!important;opacity:.85}
+.challenge-button.challenge-solved:hover,.challenge-button.solved-challenge:hover{background-color:#02e678!important;border-color:#02e678!important;opacity:1}
+.challenge-button span:before{background-image:url(../img/coin.png);width:16px;height:16px;display:inline-block;content:'';background-size:cover;margin:0 4px -3px 0}
+.challenge-button:hover{background-color:#ff0e66!important;border-color:#8f0034!important}
+.challenge-tag{background-color:#2492ef!important;text-transform:uppercase}
+.challenge-name{color:#ff0e66;text-shadow:unset;font-size:1rem}
+.challenge-value:before{background-image:url(../img/coin.png);width:28px;height:28px;display:inline-block;content:'';background-size:cover;margin:0 -5px -5px 0}
+main:before{content:' ';display:block;position:absolute;top:0;left:0;bottom:0;right:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.25) 50%),linear-gradient(90deg,rgba(255,0,0,.06),rgba(0,255,0,.02),rgba(0,0,255,.06));background-size:100% 2px,3px 100%;opacity:.03;z-index:2;pointer-events:none}
+@keyframes scanline{0%{bottom:100%}
+80%{bottom:100%}
+100%{bottom:0}
+}
+.hljs{display:block;overflow-x:auto;padding:.5em;color:#333;background:#f8f8f8}
+.hljs-comment,.hljs-quote{color:#998;font-style:italic}
+.hljs-keyword,.hljs-selector-tag,.hljs-subst{color:#333;font-weight:700}
+.hljs-literal,.hljs-number,.hljs-tag .hljs-attr,.hljs-template-variable,.hljs-variable{color:teal}
+.hljs-doctag,.hljs-string{color:#d14}
+.hljs-section,.hljs-selector-id,.hljs-title{color:#900;font-weight:700}
+.hljs-subst{font-weight:400}
+.hljs-class .hljs-title,.hljs-type{color:#458;font-weight:700}
+.hljs-attribute,.hljs-name,.hljs-tag{color:navy;font-weight:400}
+.hljs-link,.hljs-regexp{color:#009926}
+.hljs-bullet,.hljs-symbol{color:#990073}
+.hljs-built_in,.hljs-builtin-name{color:#0086b3}
+.hljs-meta{color:#999;font-weight:700}
+.hljs-deletion{background:#fdd}
+.hljs-addition{background:#dfd}
+.hljs-emphasis{font-style:italic}
+.hljs-strong{font-weight:700}
+main{padding-top:3.5rem}
+html{position:relative;min-height:100%}
+main{margin-bottom:100px}
+.footer{position:absolute;bottom:1px;width:100%;height:60px;line-height:20px;z-index:10}
+.footer .container{font-family:'Press Start 2P',cursive;font-size:11px}
+
+/* ===== Pixo Theme Overrides for CTFd (Bootstrap 5 Dark Mode) ===== */
+
+/* --- Base Colors --- */
+body { background-color: #0c0327 !important; color: #c9c9c9; }
+h1, h2, h3, h4, h5, h6 { color: #fff; }
+
+/* --- Navbar --- */
+.navbar { background-color: #0c0327 !important; border-bottom: 2px solid #3312d5; }
+.nav-link { text-transform: uppercase; color: #fff !important; font-family: 'Roboto', sans-serif !important; font-size: 0.9rem; font-weight: bold; letter-spacing: 1px; }
+
+/* --- Layout --- */
+main .container { max-width: 90% !important; margin-top: 60px; }
+
+/* --- Tables --- */
+.table { background-color: transparent; color: #fff; border: 2px solid #3312d5; }
+.table th, .table td { border-color: #3312d5; color: #fff; }
+.table thead th { text-transform: uppercase; color: #ff0e66 !important; border-bottom: 2px solid #3312d5 !important; }
+
+/* --- Buttons --- */
+.btn-primary { background-color: #2378c0; border-color: #3312d5; color: #fff; border-radius: 0; }
+.btn-primary:hover { background-color: #ff0e66; border-color: #8f0034; color: #fff; }
+.btn-info { background-color: #2492ef; border-color: #3312d5; color: #fff; border-radius: 0; }
+.btn-info:hover { background-color: #1a6fb5; border-color: #1a6fb5; color: #fff; }
+.btn-danger { background-color: #ff0e66; border-color: #8f0034; color: #fff; border-radius: 0; }
+
+/* --- Badges --- */
+.badge { border-radius: 0; }
+.badge-notification { vertical-align: top; margin-left: -0.5em; font-size: 50%; }
+
+/* --- Forms --- */
+.form-control { background-color: transparent !important; color: #fff !important; border-color: #3312d5; border-radius: 0; padding: 0.8em !important; border-style: dashed; height: auto !important; }
+.form-control::placeholder { color: #666; }
+.form-control:focus { background-color: transparent !important; border-color: #2492ef; box-shadow: 0 0 0 0.1rem #2492ef; color: #fff !important; }
+.form-select { background-color: transparent; color: #fff; border-color: #3312d5; }
+input, select, textarea { color-scheme: dark; }
+
+/* --- Cards --- */
+.card { border-radius: 0 !important; }
+
+/* --- Modals --- */
+.modal-content { background-color: #1a0a3e; border: 1px solid #3312d5; }
+.modal-header { border-bottom-color: #3312d5; }
+.modal-footer { border-top-color: #3312d5; }
+
+/* --- Dropdowns --- */
+.dropdown-menu { background-color: #1a0a3e; border: 1px solid #3312d5; }
+.dropdown-item { color: #c9c9c9; }
+.dropdown-item:hover, .dropdown-item:focus { background-color: #3312d5; color: #fff; }
+
+/* --- Tabs (Challenge modal) --- */
+.nav-tabs .nav-link { color: #c9c9c9; }
+.nav-tabs .nav-link.active { background-color: #1a0a3e; border-color: #3312d5; color: #fff; }
+
+/* --- Links --- */
+a { color: #ff0e66; }
+a:hover { color: #fff; }
+a.text-secondary { color: #8888aa !important; }
+.text-muted { color: #8888aa !important; }
+
+/* --- Footer --- */
+.footer { background-color: transparent; }
+
+/* --- Jumbotron --- */
+.jumbotron { background-color: transparent; color: #fff; }
+
+/* --- Page Content (index page, custom pages) --- */
+main > .container:only-child { text-align: center; }
+main > .container h1,
+main > .container h2,
+main > .container h3,
+.jumbotron h1 {
+  font-family: 'Press Start 2P', cursive;
+  color: #ff0e66;
+  text-shadow: 3px 3px 0px #3312d5;
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  line-height: 1.6;
+}
+main > .container:only-child h4,
+main > .container:only-child h5,
+main > .container:only-child h6 {
+  font-family: 'Press Start 2P', cursive;
+  color: #c9c9c9;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+main > .container:only-child p {
+  font-size: 1.1rem;
+  color: #c9c9c9;
+  line-height: 1.8;
+}
+main > .container:only-child .fab,
+main > .container:only-child .fa,
+main > .container:only-child .fas,
+main > .container:only-child .far {
+  color: #fff;
+}
+main > .container:only-child a:not(.btn) {
+  color: #ff0e66;
+  text-decoration: none;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.85em;
+}
+main > .container:only-child a:not(.btn):hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* --- Graphs --- */
+#score-graph { min-height: 400px; display: block; clear: both; }
+#solves-graph { display: block; height: 350px; }
+#categories-pie-graph, #keys-pie-graph { min-height: 400px; display: block; }
+
+/* --- Select options --- */
+select.form-control { height: auto !important; }

@@ -1,0 +1,4 @@
+{
+    "name": "LDAP / Active Directory Auth",
+    "route": "/admin/ldap-settings"
+}

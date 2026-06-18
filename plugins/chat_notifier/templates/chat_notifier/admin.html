@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+	<div class="container">
+		<h1>Chat Notifier</h1>
+		<h4>Sends chat notifications about solves and admin announcements</h4>
+		<h6><a href="https://github.com/krzys-h/CTFd_chat_notifier">https://github.com/krzys-h/CTFd_chat_notifier</a></h6>
+	</div>
+</div>
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			{% for error in errors %}
+				<div class="alert alert-danger alert-dismissable" role="alert">
+					<span class="sr-only">Error:</span>
+					{{ error }}
+					<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+			{% endfor %}
+
+			<form method="POST" autocomplete="off" class="w-100">
+				<div class="form-group">
+					<label>
+						Notifier type<br>
+						<small class="form-text text-muted">
+							Select the notification backend you want to use
+						</small>
+					</label>
+					<select class="form-control custom-select" id="notifier_type" name="notifier_type">
+						<option value=""></option>
+						{% for type in supported_notifier_types %}
+							<option {% if notifier_type == type %}selected{% endif %}>{{ type }}</option>
+						{% endfor %}
+					</select>
+				</div>
+
+				{% for notifiername, subsettings in supported_notifier_settings.items() %}
+				<div id="notifier_settings-{{ notifiername }}" class="notifier_settings">
+					{{ subsettings }}
+				</div>
+				{% endfor %}
+
+				<div class="form-group">
+					<div class="form-check">
+						<label>
+							<input id="notifier_send_notifications" name="notifier_send_notifications" type="checkbox" {% if notifier_send_notifications %}checked{% endif %}>
+							Send notifications<br>
+							<small>
+								Send information about notifications published by admins
+							</small>
+						</label>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="form-check">
+						<label>
+							<input id="notifier_send_solves" name="notifier_send_solves" type="checkbox" {% if notifier_send_solves %}checked{% endif %}>
+							Send solves<br>
+							<small>
+								Send information about solves
+							</small>
+						</label>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>
+						Solve text<br>
+						<small class="form-text text-muted">
+							Format to use for solve messages
+						</small>
+					</label>
+					<input class="form-control" id="notifier_solve_msg" name="notifier_solve_msg" type="text"
+						placeholder="{solver} solved {challenge} ({solve_num} solve)"
+						{% if notifier_solve_msg is defined and notifier_solve_msg != None %}value="{{ notifier_solve_msg }}"{% endif %}>
+				</div>
+
+				<div class="form-group">
+					<label>
+						Stop solve notifications after X solves<br>
+						<small class="form-text text-muted">
+							The max number of solves for a notification to be sent, e.g. 3 will send notification only for first 3 people. If not set, will notify for every solve.
+						</small>
+					</label>
+					<input class="form-control" id="notifier_solve_count" name="notifier_solve_count" type="number" min="0"
+						placeholder="infinite"
+						{% if notifier_solve_count is defined and notifier_solve_count != None %}value="{{ notifier_solve_count }}"{% endif %}>
+				</div>
+
+				<input type="hidden" name="nonce" value="{{ nonce }}">
+				<button type="submit" class="btn btn-md btn-primary float-right">Update</button>
+			</form>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block entrypoint %}
+{{ super() }}
+
+<script>
+window.onload = function() {
+  CTFd.plugin.run((_CTFd) => {
+    const $ = _CTFd.lib.$;
+
+    $(function() {
+      function changeSettingsTo(notifier_name) {
+        $('.notifier_settings').hide();
+        if (notifier_name)
+          $('#notifier_settings-' + notifier_name).show();
+      }
+
+      $('#notifier_type').change(function() { changeSettingsTo($(this).val()); });
+      changeSettingsTo($('#notifier_type').val());
+    });
+  });
+}
+</script>
+{% endblock %}

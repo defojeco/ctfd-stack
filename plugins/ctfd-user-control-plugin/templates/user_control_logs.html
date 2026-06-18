@@ -1,0 +1,104 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+    <div class="container">
+        <h1>Audit Logs</h1>
+        <p class="lead">Журнал действий пользователей</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <a href="{{ url_for('user_control.admin_settings') }}" class="btn btn-secondary mb-3">
+                ← Назад к настройкам
+            </a>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Время</th>
+                            <th>Пользователь</th>
+                            <th>Действие</th>
+                            <th>Цель</th>
+                            <th>IP</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr {% if log.blocked %}class="table-danger"{% endif %}>
+                            <td>{{ log.id }}</td>
+                            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                {% if log.user_id %}
+                                    User #{{ log.user_id }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td><code>{{ log.action }}</code></td>
+                            <td>{{ log.target or '-' }}</td>
+                            <td>{{ log.ip_address }}</td>
+                            <td>
+                                {% if log.blocked %}
+                                    <span class="badge badge-danger">BLOCKED</span>
+                                {% else %}
+                                    <span class="badge badge-success">ALLOWED</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Пагинация -->
+            {% if logs.pages > 1 %}
+            <nav>
+                <ul class="pagination">
+                    {% if logs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('user_control.admin_logs', page=logs.prev_num) }}">
+                            Предыдущая
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == logs.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('user_control.admin_logs', page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('user_control.admin_logs', page=logs.next_num) }}">
+                            Следующая
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

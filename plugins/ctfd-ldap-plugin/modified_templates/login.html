@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+  .ldap-mode-tabs {
+    display: flex;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+    margin-bottom: 20px;
+  }
+  .ldap-mode-tab {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.92em;
+    cursor: pointer;
+    background: #f8f9fa;
+    color: #555;
+    border: none;
+    outline: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .ldap-mode-tab.active {
+    background: #0d6efd;
+    color: #fff;
+  }
+  .ldap-mode-tab:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+  .ldap-mode-hint {
+    font-size: 0.82em;
+    color: #888;
+    text-align: center;
+    margin: -12px 0 16px;
+    min-height: 18px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Login</h1>
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+
+      {% include "components/errors.html" %}
+
+      {% if ldap_enabled or local_enabled %}
+      <div class="ldap-mode-tabs">
+        <button type="button" class="ldap-mode-tab" id="tab-domain"
+                onclick="setMode('domain')"
+                {% if not ldap_enabled %}disabled title="Domain login disabled"{% endif %}>
+          &#x1F3E2; Domain (AD)
+        </button>
+        <button type="button" class="ldap-mode-tab" id="tab-local"
+                onclick="setMode('local')"
+                {% if not local_enabled %}disabled title="Local login disabled"{% endif %}>
+          &#x1F511; Local
+        </button>
+      </div>
+      <div class="ldap-mode-hint" id="modeHint"></div>
+      {% endif %}
+
+      {% with form = Forms.auth.LoginForm() %}
+      <form method="post" accept-charset="utf-8" autocomplete="off">
+        <input type="hidden" name="login_mode" id="login_mode_field" value="domain">
+
+        <div class="mb-3">
+          <b><label for="name-input" id="name-label">{{ form.name.label.text }}</label></b>
+          {{ form.name(class="form-control", id="name-input", autocomplete="username", autofocus=true) }}
+        </div>
+        <div class="mb-3">
+          <b>{{ form.password.label }}</b>
+          {{ form.password(class="form-control", autocomplete="current-password") }}
+        </div>
+        <div class="row pt-3">
+          <div class="col-md-6">
+            <a class="float-start align-middle" href="{{ url_for('auth.reset_password') }}">
+              Forgot your password?
+            </a>
+          </div>
+          <div class="col-md-6">
+            {{ form.submit(class="btn btn-md btn-primary w-100") }}
+          </div>
+        </div>
+        {{ form.nonce() }}
+      </form>
+      {% endwith %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  var ldapEnabled  = {{ 'true' if ldap_enabled  else 'false' }};
+  var localEnabled = {{ 'true' if local_enabled else 'false' }};
+
+  function setMode(mode) {
+    if (mode === 'domain' && !ldapEnabled)  mode = 'local';
+    if (mode === 'local'  && !localEnabled) mode = 'domain';
+
+    document.getElementById('login_mode_field').value = mode;
+
+    var hints = {
+      domain: 'Enter your domain username (e.g. <b>ivanov</b>)',
+      local:  'Enter your CTFd username or email'
+    };
+    document.getElementById('modeHint').innerHTML = hints[mode] || '';
+
+    ['domain', 'local'].forEach(function(m) {
+      var t = document.getElementById('tab-' + m);
+      if (t) t.classList.toggle('active', m === mode);
+    });
+
+    var lbl = document.getElementById('name-label');
+    if (mode === 'domain') {
+      lbl.textContent = 'Domain Username';
+    } else {
+      lbl.textContent = 'User Name or Email';
+    }
+  }
+
+  (function() {
+    setMode(ldapEnabled ? 'domain' : 'local');
+  })();
+</script>
+{% endblock %}

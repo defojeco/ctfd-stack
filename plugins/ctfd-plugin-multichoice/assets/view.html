@@ -1,0 +1,199 @@
+{% extends "challenge.html" %}
+
+{% block description %}
+{{ challenge.html }}
+
+{% set raw_options = challenge.flagchoose.strip() %}
+{% set mode = challenge.mode if challenge.mode else 'single' %}
+
+{# Проверяем формат: новый (множественные вопросы) или старый (один вопрос) #}
+{% if '¶' in raw_options %}
+  {# Новый формат: множественные вопросы #}
+  {% set questions_raw = raw_options.split('¶¶') %}
+
+  <div class="mc-wrapper mt-3 mb-4">
+    <div class="mc-hint mb-3">
+      {% if mode == 'single' %}
+        <span class="mc-badge mc-badge-single">● {{ mc_trans('select_one') }}</span>
+      {% else %}
+        <span class="mc-badge mc-badge-multi">◉ {{ mc_trans('select_all') }}</span>
+      {% endif %}
+      <span class="mc-badge mc-badge-info">Вопросов: {{ questions_raw | length }}</span>
+    </div>
+
+    {% for q_raw in questions_raw %}
+      {% set q_parts = q_raw.split('¶', 1) %}
+      {% if q_parts | length == 2 %}
+        {% set question_text = q_parts[0].strip() %}
+        {% set options_raw = q_parts[1].strip() %}
+        {% set options = options_raw.split('§') %}
+        {% set q_idx = loop.index0 %}
+
+        <div class="mc-question-block" data-q-idx="{{ q_idx }}">
+          <div class="mc-question-header">
+            <span class="mc-question-number">{{ loop.index }}</span>
+            <span class="mc-question-text">{{ question_text }}</span>
+          </div>
+
+          <div class="mc-options" data-q-idx="{{ q_idx }}">
+            {% for opt in options %}
+              {% set opt_text = opt.split('|')[0] if '|' in opt else opt %}
+              {% if opt_text.strip() %}
+              <label class="mc-option" data-q-idx="{{ q_idx }}" data-value="{{ opt_text.strip() | e }}">
+                <input type="{{ 'radio' if mode == 'single' else 'checkbox' }}"
+                       name="mc_answer_q{{ q_idx }}"
+                       value="{{ opt_text.strip() | e }}"
+                       data-q-idx="{{ q_idx }}">
+                <span class="mc-option-box">
+                  {% if mode == 'single' %}
+                    <span class="mc-radio-dot"></span>
+                  {% else %}
+                    <span class="mc-check-mark">✓</span>
+                  {% endif %}
+                </span>
+                <span class="mc-option-text">{{ opt_text.strip() }}</span>
+              </label>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+{% else %}
+  {# Старый формат: один вопрос #}
+  {% set options = raw_options.split('§') %}
+
+  <div class="mc-wrapper mt-3 mb-4">
+    <div class="mc-hint mb-2">
+      {% if mode == 'single' %}
+        <span class="mc-badge mc-badge-single">● {{ mc_trans('select_one') }}</span>
+      {% else %}
+        <span class="mc-badge mc-badge-multi">◉ {{ mc_trans('select_all') }}</span>
+      {% endif %}
+    </div>
+
+    <div class="mc-options" id="mc-options-list">
+      {% for opt in options %}
+        {% set opt_text = opt.split('|')[0] if '|' in opt else opt %}
+        {% if opt_text.strip() %}
+        <label class="mc-option" data-value="{{ opt_text.strip() | e }}">
+          <input type="{{ 'radio' if mode == 'single' else 'checkbox' }}"
+                 name="mc_answer"
+                 value="{{ opt_text.strip() | e }}">
+          <span class="mc-option-box">
+            {% if mode == 'single' %}
+              <span class="mc-radio-dot"></span>
+            {% else %}
+              <span class="mc-check-mark">✓</span>
+            {% endif %}
+          </span>
+          <span class="mc-option-text">{{ opt_text.strip() }}</span>
+        </label>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+<style>
+.mc-wrapper { margin-bottom: 1.5rem; }
+.mc-badge { display:inline-block; padding:4px 12px; border-radius:20px; font-size:.8em; font-weight:600; margin-right:8px; }
+.mc-badge-single { background:#e8f0fe; color:#1a56db; }
+.mc-badge-multi  { background:#e8faf0; color:#0f7b4b; }
+.mc-badge-info   { background:#fff3cd; color:#856404; }
+
+.mc-question-block {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  background: #f8f9fa;
+}
+
+.mc-question-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mc-question-number {
+  background: #0d6efd;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1em;
+  flex-shrink: 0;
+}
+
+.mc-question-text {
+  font-size: 1.05em;
+  font-weight: 600;
+  color: #212529;
+  line-height: 1.4;
+}
+
+.mc-options { display:flex; flex-direction:column; gap:10px; margin-bottom:1rem; }
+
+.mc-option {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 18px;
+  border:2px solid #e9ecef; border-radius:10px;
+  cursor:pointer;
+  transition:all .18s ease;
+  background:#fff;
+  user-select:none;
+  margin:0;
+}
+.mc-option:hover { border-color:#86b7fe; background:#f8fbff; transform:translateX(3px); box-shadow:0 2px 8px rgba(13,110,253,.1); }
+
+.mc-option input[type=radio],
+.mc-option input[type=checkbox] { position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
+
+.mc-option-box {
+  width:22px; height:22px; border:2px solid #ced4da; border-radius:50%;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  transition:all .18s; background:#fff;
+}
+.mc-option input[type=checkbox] ~ .mc-option-box { border-radius:6px; }
+
+.mc-radio-dot  { width:10px; height:10px; border-radius:50%; background:#0d6efd; opacity:0; transform:scale(0); transition:all .15s; }
+.mc-check-mark { font-size:14px; color:#fff; opacity:0; transform:scale(0); transition:all .15s; font-weight:700; }
+
+.mc-option-text { font-size:.97em; color:#212529; line-height:1.4; }
+
+.mc-option.selected { border-color:#0d6efd; background:#f0f6ff; box-shadow:0 2px 12px rgba(13,110,253,.15); }
+.mc-option.selected .mc-option-box { border-color:#0d6efd; background:#0d6efd; }
+.mc-option.selected .mc-radio-dot,
+.mc-option.selected .mc-check-mark { opacity:1; transform:scale(1); }
+.mc-option.selected .mc-option-text { color:#0a3a8c; font-weight:500; }
+
+.mc-option.feedback-correct { border-color:#198754 !important; background:#f0fff4 !important; }
+.mc-option.feedback-correct .mc-option-box { border-color:#198754 !important; background:#198754 !important; }
+.mc-option.feedback-wrong   { border-color:#dc3545 !important; background:#fff5f5 !important; }
+.mc-option.feedback-wrong   .mc-option-box { border-color:#dc3545 !important; background:#dc3545 !important; }
+</style>
+{% endblock %}
+
+{% block input %}
+  <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+  <input id="challenge-input" class="challenge-input" type="hidden" name="submission" x-model="submission">
+{% endblock %}
+
+{% block submit %}
+  <button
+    id="challenge-submit"
+    class="challenge-submit btn btn-primary w-100 h-100"
+    type="submit"
+    @click.debounce.500ms="submitChallenge()"
+    style="font-weight:600;">
+    {% trans %}Submit{% endtrans %}
+  </button>
+{% endblock %}
