@@ -14,7 +14,7 @@ Built on [CTFd 3.8.5](https://github.com/CTFd/CTFd).
 | [ctfd-ldap-plugin](https://github.com/defojeco/ctfd-ldap-plugin) | Active Directory authentication with AES-256 cache and team auto-assignment | defojeco |
 | [ctfd-plugin-multichoice](https://github.com/defojeco/ctfd-plugin-multichoice) | Multiple choice challenge type with shuffle and partial scoring | defojeco |
 | [ctfd-user-control-plugin](https://github.com/defojeco/ctfd-user-control-plugin) | Profile lock, attempt limiting, and audit log | defojeco |
-| [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) | Discord / Slack / Telegram notifications | tamuctf |
+| [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) | Discord / Slack / Telegram notifications | krzys-h |
 
 ### Themes
 | Theme | Description | Author |
