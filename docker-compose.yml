@@ -52,6 +52,8 @@ services:
       - ./plugins/chat_notifier:/opt/CTFd/CTFd/plugins/chat_notifier:ro
       - ./plugins/ctfd-plugin-multichoice:/opt/CTFd/CTFd/plugins/ctfd-plugin-multichoice:ro
       - ./plugins/ctfd-user-control-plugin:/opt/CTFd/CTFd/plugins/ctfd-user-control-plugin:ro
+      - ./plugins/ctfd-dynamic-flag:/opt/CTFd/CTFd/plugins/ctfd-dynamic-flag:ro
+      - ./plugins/ctfd-dynamic-values:/opt/CTFd/CTFd/plugins/ctfd-dynamic-values:ro
       - ./themes/wmctf2025:/opt/CTFd/CTFd/themes/wmctf2025:ro
       - ./themes/pixo:/opt/CTFd/CTFd/themes/pixo:ro
       - ./themes/neon:/opt/CTFd/CTFd/themes/neon:ro
