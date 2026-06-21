@@ -12,6 +12,8 @@ Built on [CTFd 3.8.5](https://github.com/CTFd/CTFd).
 | Plugin | Description | Author |
 |---|---|---|
 | [ctfd-ldap-plugin](https://github.com/defojeco/ctfd-ldap-plugin) | Active Directory authentication with AES-256 cache and team auto-assignment | defojeco |
+| [ctfd-dynamic-flag](https://github.com/defojeco/ctfd-dynamic-flag) | Per-user/per-team computed flags (anti-sharing) via whitelisted hashing schemes | defojeco |
+| [ctfd-dynamic-values](https://github.com/defojeco/ctfd-dynamic-values) | Per-participant dynamic variables (unique IP/port/token) embedded in challenge text | defojeco |
 | [ctfd-plugin-multichoice](https://github.com/defojeco/ctfd-plugin-multichoice) | Multiple choice challenge type with shuffle and partial scoring | defojeco |
 | [ctfd-user-control-plugin](https://github.com/defojeco/ctfd-user-control-plugin) | Profile lock, attempt limiting, and audit log | defojeco |
 | [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) | Discord / Slack / Telegram notifications | krzys-h |
