@@ -12,6 +12,8 @@
 | Плагин | Описание | Автор |
 |---|---|---|
 | [ctfd-ldap-plugin](https://github.com/defojeco/ctfd-ldap-plugin) | Аутентификация через Active Directory с кэшем AES-256 и автоназначением команд | defojeco |
+| [ctfd-dynamic-flag](https://github.com/defojeco/ctfd-dynamic-flag) | Персональные/командные вычисляемые флаги (защита от шаринга) через разрешённые схемы хеширования | defojeco |
+| [ctfd-dynamic-values](https://github.com/defojeco/ctfd-dynamic-values) | Динамические переменные для каждого участника (уникальный IP/порт/токен) встроенные в текст задания | defojeco |
 | [ctfd-plugin-multichoice](https://github.com/defojeco/ctfd-plugin-multichoice) | Задания с выбором ответа — одиночный/множественный выбор, перемешивание, частичный зачёт | defojeco |
 | [ctfd-user-control-plugin](https://github.com/defojeco/ctfd-user-control-plugin) | Блокировка профиля, лимит попыток, журнал аудита | defojeco |
 | [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) | Уведомления в Discord / Slack / Telegram | krzys-h |
@@ -105,7 +107,7 @@ docker compose down && docker compose up -d
 - [wmctf2025 theme](https://github.com/wm-team/ctfd-wmctf2025-theme) — wm-team
 - [pixo theme](https://github.com/jagdishtripathy/pixo) — jagdishtripathy
 - [neon theme](https://github.com/chainflag/ctfd-neon-theme) — chainflag
-- [chat-notifier](https://github.com/krzys-h/CTFd-chat-notifier) — krzys-h
+- [chat-notifier](https://github.com/krzys-h/CTFd_chat_notifier) — krzys-h
 
 ## Лицензия
 
