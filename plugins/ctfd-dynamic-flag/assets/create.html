@@ -1,0 +1,77 @@
+<label>
+	Dynamic Formula<br>
+	<small>Per-user flag is computed from a whitelisted scheme. No code is executed.</small>
+</label>
+
+<div class="form-group">
+	<label>Scheme</label>
+	<select class="form-control custom-select" id="df-scheme">
+		<option value="sha256">sha256(secret + source)</option>
+		<option value="hmac-sha256">hmac-sha256(key=secret, msg=source)</option>
+		<option value="base64">base64(secret + source)</option>
+		<option value="simple">simple (source as-is, no hashing, case-insensitive)</option>
+	</select>
+</div>
+
+<div class="form-group">
+	<label>Secret <small class="text-muted">(key / salt, keep private)</small></label>
+	<input type="text" class="form-control" id="df-secret" placeholder="S3CR3T">
+</div>
+
+<div class="form-group">
+	<label>Source template</label>
+	<input type="text" class="form-control" id="df-source" placeholder="{user_name}">
+	<small class="text-muted">Placeholders: {user_name} {user_email} {user_id} {team_name} {team_id}</small>
+</div>
+
+<div class="form-group">
+	<label>Output format <small class="text-muted">(%s = digest)</small></label>
+	<input type="text" class="form-control" id="df-format">
+</div>
+
+<div class="form-group">
+	<label>Length <small class="text-muted">(truncate digest, 0 = full)</small></label>
+	<input type="number" class="form-control" id="df-length" min="0" max="256" value="32">
+</div>
+
+<!-- CTFd persists name="content" as the flag value; we store JSON in it. -->
+<input type="hidden" name="content" id="df-content">
+<input type="hidden" name="type" value="dynamic_formula">
+
+<script>
+(function () {
+	function buildJSON() {
+		return JSON.stringify({
+			scheme: document.getElementById("df-scheme").value,
+			secret: document.getElementById("df-secret").value,
+			source: document.getElementById("df-source").value,
+			format: document.getElementById("df-format").value,
+			length: parseInt(document.getElementById("df-length").value, 10) || 0
+		});
+	}
+	function sync() {
+		document.getElementById("df-content").value = buildJSON();
+	}
+	["df-scheme", "df-secret", "df-source", "df-format", "df-length"].forEach(function (id) {
+		var el = document.getElementById(id);
+		if (!el) return;
+		el.addEventListener("input", sync);
+		el.addEventListener("change", sync);
+	});
+	// Rebuild at submit time too, so the value is always current even if no
+	// input event fired (e.g. autofill).
+	var contentEl = document.getElementById("df-content");
+	var form = contentEl.form || contentEl.closest("form");
+	if (form) {
+		form.addEventListener("submit", sync);
+	}
+	// Defaults set here (not as HTML value=) so the template contains no "{"+"%"
+	// sequence, which nunjucks would mis-parse as a block tag.
+	var fmtEl = document.getElementById("df-format");
+	var defFmt = "FLAG{" + "%s}";
+	fmtEl.placeholder = defFmt;
+	if (!fmtEl.value) fmtEl.value = defFmt;
+	document.getElementById("df-source").placeholder = "{user_name}";
+	sync();
+})();
+</script>

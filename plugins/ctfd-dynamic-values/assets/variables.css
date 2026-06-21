@@ -1,0 +1,5 @@
+/* ctfd-dynamic-values — minor admin tweaks. The UI is built with stock
+   Bootstrap classes from the admin theme; this only smooths a few edges. */
+#variables #dv-form { align-items: center; }
+#variables #dv-preview { color: #28a745; }
+#variables code { white-space: nowrap; }

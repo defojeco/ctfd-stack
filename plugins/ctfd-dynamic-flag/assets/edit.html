@@ -1,0 +1,95 @@
+<label>
+	Dynamic Formula<br>
+	<small>Per-user flag is computed from a whitelisted scheme. No code is executed.</small>
+</label>
+
+<div class="form-group">
+	<label>Scheme</label>
+	<select class="form-control custom-select" id="df-scheme">
+		<option value="sha256">sha256(secret + source)</option>
+		<option value="hmac-sha256">hmac-sha256(key=secret, msg=source)</option>
+		<option value="base64">base64(secret + source)</option>
+		<option value="simple">simple (source as-is, no hashing, case-insensitive)</option>
+	</select>
+</div>
+
+<div class="form-group">
+	<label>Secret <small class="text-muted">(key / salt, keep private)</small></label>
+	<input type="text" class="form-control" id="df-secret">
+</div>
+
+<div class="form-group">
+	<label>Source template</label>
+	<input type="text" class="form-control" id="df-source">
+	<small class="text-muted">Placeholders: {user_name} {user_email} {user_id} {team_name} {team_id}</small>
+</div>
+
+<div class="form-group">
+	<label>Output format <small class="text-muted">(%s = digest)</small></label>
+	<input type="text" class="form-control" id="df-format">
+</div>
+
+<div class="form-group">
+	<label>Length <small class="text-muted">(truncate digest, 0 = full)</small></label>
+	<input type="number" class="form-control" id="df-length" min="0" max="256">
+</div>
+
+<!-- name="content" is what CTFd persists; name="type"/"id" are required for PATCH.
+     The stored JSON config is carried in data-stored via the nunjucks content
+     variable; we JSON.parse it in JS (no Jinja tojson filter needed). -->
+<input type="hidden" name="content" id="df-content" data-stored="{{ content }}">
+<input type="hidden" name="type" value="dynamic_formula">
+<input type="hidden" name="id" value="{{ id }}">
+
+<hr>
+<div class="form-group">
+	<button class="btn btn-success float-right">Update</button>
+</div>
+
+<script>
+(function () {
+	function buildJSON() {
+		return JSON.stringify({
+			scheme: document.getElementById("df-scheme").value,
+			secret: document.getElementById("df-secret").value,
+			source: document.getElementById("df-source").value,
+			format: document.getElementById("df-format").value,
+			length: parseInt(document.getElementById("df-length").value, 10) || 0
+		});
+	}
+	function sync() {
+		document.getElementById("df-content").value = buildJSON();
+	}
+	function htmlDecode(s) {
+		// nunjucks autoescapes the attribute (&quot; &#39; &#92; ...). Let the
+		// browser decode every entity correctly before we JSON.parse.
+		var ta = document.createElement("textarea");
+		ta.innerHTML = s;
+		return ta.value;
+	}
+	function loadStored() {
+		var raw = document.getElementById("df-content").getAttribute("data-stored") || "";
+		var cfg = {};
+		try { cfg = raw ? JSON.parse(htmlDecode(raw)) : {}; } catch (e) { cfg = {}; }
+		document.getElementById("df-scheme").value = cfg.scheme || "sha256";
+		document.getElementById("df-secret").value = cfg.secret || "";
+		document.getElementById("df-source").value = cfg.source || "";
+		document.getElementById("df-format").value = cfg.format || ("FLAG{" + "%s}");
+		document.getElementById("df-length").value =
+			(cfg.length === undefined || cfg.length === null) ? 32 : cfg.length;
+	}
+	["df-scheme", "df-secret", "df-source", "df-format", "df-length"].forEach(function (id) {
+		var el = document.getElementById(id);
+		if (!el) return;
+		el.addEventListener("input", sync);
+		el.addEventListener("change", sync);
+	});
+	var contentEl = document.getElementById("df-content");
+	var form = contentEl.form || contentEl.closest("form");
+	if (form) {
+		form.addEventListener("submit", sync);
+	}
+	loadStored();
+	sync();
+})();
+</script>
